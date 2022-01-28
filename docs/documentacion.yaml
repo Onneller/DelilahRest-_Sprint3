@@ -1,0 +1,2123 @@
+swagger: "2.0"
+info: 
+  description: "API designed for manage users, products and orders of the  Deliah resto restaurant.if You want to use the API, you need to register an account with the post of user first and later you must logged for getting access to a token the authentication. when you have the token, you need to send the token in the headers with the key Authorization in this way: verify {token}"
+  version: "1.0.0"
+  title: "Deliah resto API"
+  contact:  
+    email: "onneller@gmail.com"
+  license:
+    name: "MIT"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "localhost:3000"
+basePath: "/"
+schemes: 
+- "https"
+- "http"
+components:
+  securitySchemes:
+    ApiKeyAuth:  # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /login:
+    post:
+      tags:
+      - "auth"
+      summary: "login and autenticate session of user"
+      description: "Send into body json param userName and password from this user"
+      consumes:
+      - "application/json" 
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Object with autenticate user data: userName and password."
+        required: true
+        security: 
+          - apiKeyAuth: []
+      responses:
+        "200":
+          description: "Successful login"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  status:
+                    type: "string"
+          schema:
+            $ref: "#/definitions/loginSuccess"
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"  
+        "500":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/loginUnsuccess"
+
+  /users:
+    get:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "users"
+      summary: "get users of the DB "
+      description: "with the admi role, you can access the users of the BD"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true                
+      responses:
+        "200":
+          description: "array with the users data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/getUsers"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"    
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError" 
+        "500":
+          description: "Users not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/user_NotFound"
+
+  /user:
+    post:
+      tags:
+      - "users"
+      summary: "add one user to the BD"
+      description: "provide the correct data of the user on the body and create the user"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "object whith the user data"
+        required: true
+        schema:
+          $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: "User has been created"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/postProductSuccess"
+        "403":
+          description: "Data in use. Existing user."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/userUnsuccess_UserExist"
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in user data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/userUnsuccess_FormatError"
+
+  /user/{id}:
+    get:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "users"
+      summary: "get user with id of the BD"
+      description: "send the  user id on the path and you can get the user data if you have an admin role. if you are a user only can see your data"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "user id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "data user"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/user_Found"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService" 
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken" 
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/user_NotFound"
+
+    put:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "users"
+      summary: "update a user on the BD"
+      description: "send on the body the user data for change, with the user id on the path. use this endpoint only to change all the data"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "user id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "user data"
+        required: true
+        schema:
+          $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: "User has been updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/putUserById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService" 
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken" 
+        "403":
+          description: "Data in use. Existing user."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/userUnsuccess_UserExist"
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in user data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/userUnsuccess_FormatError"
+        "500":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/user_NotFound"
+    patch:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "users"
+      summary: "update a user on the BD"
+      description: "send on the body the user data for change, with the user id on the path. use this endpoint only to change some properties."
+      consumes:
+      - "application/json"
+      - "application/xml"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "user id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "properties of the user"
+        required: true
+        schema:
+          $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: "User has been updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/putUserById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in user data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/userUnsuccess_FormatError"
+        "500":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/user_NotFound"
+
+    delete:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "users"
+      summary: " delete a user of the BD"
+      description: "send the user id on the path and delete the user"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "user id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "User has been updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/deleteUserById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/user_NotFound"
+
+  /products:
+    get:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "products"
+      summary: "get products of the DB"
+      description: "you can access the products of the BD"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "array with the products data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/getProducts"
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/product_NotFound"
+
+  /product:
+    post:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "products"
+      summary: "add one product to the BD"
+      description: "provide the correct data of the product on the body and create the user(admin role)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "object whith the product data"
+        required: true
+        schema:
+          $ref: "#/definitions/product"
+      responses:
+        "200":
+          description: "product has been created"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/postUserSuccess"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in product data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/productUnsuccess_FormatError"
+        "500":
+          description: "Existing product."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/productUnsuccess_ProductExist"
+  /product/{id}:
+    get:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "products"
+      summary: "get product with id of the BD"
+      description: "send the product id on the path and you can get the product data"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "Id of the product"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "data product"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/product_Found"  
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/product_NotFound"
+    put:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "products"
+      summary: "update a product on the BD"
+      description: "send on the body the product data for change, with the product id on the path. use this endpoint only to change all the data(only admin role)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "product id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "product data"
+        required: true
+        schema:
+          $ref: "#/definitions/product"
+      responses:
+        "200":
+          description: "product has been updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/putProductById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in product data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/productUnsuccess_FormatError"
+        "500":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/product_NotFound"
+
+    patch:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "products"
+      summary: "update a product on the BD"
+      description: "send on the body the product data for change, with the product id on the path. use this endpoint only to change some properties.(only admin role)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "product id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "product data"
+        required: true
+        schema:
+          $ref: "#/definitions/product"
+      responses:
+        "200":
+          description: "product has been updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/putProductById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in product data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/productUnsuccess_FormatError"
+        "500":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/product_NotFound"
+        
+    delete:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "products"
+      summary: " delete a product of the BD"
+      description: "send the product id on the path and delete the user(admi role)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "product id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "product has been delete"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/deleteProductById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/product_NotFound"
+  /orders:
+    get:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "orders"
+      summary: "get products of the DB"
+      description: "admin role can access the orders of the data base, with the user role you can access your orders "
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "Returned orders successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/getOrders"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/order_NotFound"
+
+  /order:                
+    post:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "orders"
+      summary: "add one order to the BD"
+      description: "provide the correct data of the order on the body and create the order"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "order data"
+        required: true
+        schema:
+          $ref: "#/definitions/postOrder"
+      responses:
+        "200":
+          description: "order has been created"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/postOrderSuccess"
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+    
+  /order/{id}:
+    get:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "orders"
+      summary: "get order with id of the BD"
+      description: "with admin role send the order id on the path and you can get the order data. user role only can get his data "
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "Returned orders successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/order_Found"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/order_NotFound"
+
+    put:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "orders"
+      summary: "update a order on the BD"
+      description: "send on the body the product data for change, with the product id on the path. use this endpoint only to change all the data(only admin role)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "order id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "order data"
+        required: true
+        schema:
+          $ref: "#/definitions/order"
+      responses:
+        "200":
+          description: "order has been updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/putOrderById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in order data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/orderUnsuccess_FormatError"
+        "500":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/order_NotFound"
+    
+    patch:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "orders"
+      summary: "update a order on the BD"
+      description: " use this endpoint for change the order state, with the order id on the path(only admin role)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "order id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      - in: "body"
+        name: "body"
+        description: "order data"
+        required: true
+        schema:
+          $ref: "#/definitions/OrderPat"
+      responses:
+        "200":
+          description: "order has been updated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/putOrderById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "405":
+          description: "Format error in order data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/orderUnsuccess_FormatError"
+        "500":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/order_NotFound"
+    delete:
+      security:
+        - ApiKeyAuth: []
+      tags:
+      - "orders"
+      summary: "delete a order of the BD"
+      description: "send the order id on the path and delete the order"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "order id"
+        required: true
+        schema:
+          type: string
+      - in: "header"
+        name: "Authorization"
+        description: "You must send a token in the following format: Bearer [Token obtained from login]"
+        required: true   
+      responses:
+        "200":
+          description: "order has been deleted"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/deleteOrderById"
+        "400":
+          description: "The user has not permissions to carry out this action"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/DeniedService"     
+        "401":
+          description: "No identification token provided"
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/notToken"  
+        "404":
+          description: "Request error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          schema:
+            $ref: "#/definitions/requestError"
+        "500":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string   
+          schema:
+            $ref: "#/definitions/order_NotFound"
+  
+definitions:
+  User:
+    type: "object"
+    properties:
+      nombreUsuario:
+        type: "string"
+      nombreCompleto: 
+        type: "string"
+      email:
+        type: "string"
+      telefono:
+        type: "integer"
+        format: "int64"
+      direccion:
+        type: "string"
+      contrasena:
+        type: "string"
+  postOrder:
+    type: "object"
+    properties:
+      order:
+        type: "object"
+        properties:
+          nombre:
+            type: "string"
+          tipoPago:
+            type: "string"
+            
+      detalleOrder: 
+           type: array
+           items:
+             oneOf:
+              - $ref: '#/definitions/detalleOrder'
+              - $ref: '#/definitions/detalleOrder'
+
+  order:
+    type: "object"
+    properties:
+      nombre:
+        type: "string"
+      total:
+        type: "integer"
+      tipoPago: 
+        type: "integer"
+      estado:
+        type: "integer"
+        
+  detalleOrder:
+    type: "object"
+    properties:
+      idProducto:
+        type: "integer"
+        format: "int64"
+      cant:
+        type: "integer"
+        format: "int64"              
+
+  OrderPat:
+    type: "object"
+    properties:
+      order:
+        type: "object"
+        properties:
+          estado:
+            type: "integer"
+            format: "int64"
+       
+  
+  DeniedService:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successFalse"
+      msg:
+        $ref: "#/definitions/msgUsernotHasPermisions"
+
+  notToken:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successFalse"
+      msg:
+        $ref: "#/definitions/msgUserNotSendedToken"
+
+  requestError:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successFalse"
+      msg:
+        type: "string"
+        default: "error message"
+  
+  successTrue:
+    type: "boolean"
+    default: true
+  successFalse:
+    type: "boolean"
+    default: false
+  
+  msgUserCreated:
+    type: "string"
+    default: "CREATED_USER"
+  msgProductCreated:
+    type: "string"
+    default: "CREATED_PRODUCT"
+  msgOrderCreated:
+    type: "string"
+    default: "CREATED_ORDER"
+
+ 
+  msgUserUpdated:
+    type: "string"
+    default: "UPDATED_USER"
+  msgProductUpdated:
+    type: "string"
+    default: "UPDATED_PRODUCT"
+  msgOrderUpdated:
+    type: "string"
+    default: "UPDATED_ORDER"
+
+  msgUserDeleted:
+    type: "string"
+    default: "DELETED_USER"
+  msgProductDeleted:
+    type: "string"
+    default: "DELETED_PRODUCT"
+  msgOrderDeleted:
+    type: "string"
+    default: "DELETED_ORDER"
+    
+  msgUserFound:
+    type: "string"
+    default: "FOUND_USER"
+  msgProductFound:
+    type: "string"
+    default: "FOUND_PRODUCT"
+  msgOrderFound:
+    type: "string"
+    default: "FOUND_ORDER"
+
+  msgUserNotFound:
+    type: "string"
+    default: "NOT_FOUND_USER"
+  msgProductNotFound:
+    type: "string"
+    default: "NOT_FOUND_PRODUCT"
+  msgOrderNotFound:
+    type: "string"
+    default: "NOT_FOUND_ORDER"
+
+  msgUsernotHasPermisions:
+    type: "string"
+    default: "The user has not permissions to carry out this action"
+  msgUserNotSendedToken:
+    type: "string"
+    default: "No identification token provided"
+
+  user1:
+    type: "object"
+    properties: 
+      id: 
+        type: "integer"
+        default: 3
+      nombreUsuario: 
+        type: "string"
+        default: "maria_lopez"
+      nombreCompleto: 
+        type: "string"
+        default: Maria Lopez Marquez
+      email: 
+        type: "string"
+        default: "lopez_maria@mail.com"
+      telefono:
+        type: "integer"
+        default: 3015678439
+      direccion:
+        type: "string"
+        default: "Cll 55 No. 9-15"
+      contrasena:
+        type: "string"
+        default: maria1234.
+      idRole: 
+        type: "integer"
+        default: 2
+      
+  user2:
+    type: "object"
+    properties: 
+      id: 
+        type: "integer"
+        default: 4
+      nombreUsuario: 
+        type: "string"
+        default: "jose_apellido"
+      nombreCompleto: 
+        type: "string"
+        default: Jose Apellido
+      email: 
+        type: "string"
+        default: "josea@mail.com"
+      telefono:
+        type: "integer"
+        default: 3015112222
+      direccion:
+        type: "string"
+        default: "K 23 Casa 3a"
+      contrasena:
+        type: "string"
+        default: jose1234.
+      idRole: 
+        type: "integer"
+        default: 2
+
+  product:
+    type: "object"
+    properties:
+      nombre:
+        type: "string"
+      foto:
+        type: "string"
+        default: "http://www.example.com/images/product.jpg"
+      valor:
+        type: "integer"
+        format: "int64"
+
+  product1:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        default: 1
+      nombre:
+        type: "string"
+        default: "Hamburguesa"
+      valor:
+        type: "integer"
+        format: "int64"
+        default: "5000"
+      foto:
+        type: "string"
+        default: "http:www.laburguer.com"
+
+
+  product2:
+    type: "object"
+    properties:
+      id: 
+        type: "integer"
+        default: 2
+      nombre:
+        type: "string"
+        default: "perro"
+      valor:
+        type: "integer"
+        format: "int64"
+        default: "10000"
+      foto:
+        type: "string"
+        default: "http:www.elperro.com"
+
+  order1:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        default: 11
+      nombre:
+        type: "string"
+        default: "6x Burguer ,5x Burger Taditional"
+      hora:
+        type: "string"
+        default: "04:25:42"
+      total:
+        type: "integer"
+        default: 365000
+      tipoPago:
+        type: "integer"
+        default: 1
+      IdUser:
+        type: "integer"
+        default: 9
+      estado:
+        type: "integer"
+        default: 1
+  order2:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        default: 12
+      nombre:
+        type: "string"
+        default: "10x Burger MX ,5x Pollo Broaster "
+      hora:
+        type: "string"
+        default: "04:34:23"
+      total:
+        type: "integer"
+        default: 460000
+      tipoPago:
+        type: "integer"
+        default: 1
+      IdUser:
+        type: "integer"
+        default: 9
+      estado:
+        type: "integer"
+        default: 1
+
+  getUsers:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successTrue"
+      quantity:
+        type: "integer"
+        default: 2
+      data:
+        type: "array"
+        items:
+          oneOf:
+            - $ref: "#/definitions/user1"
+            - $ref: "#/definitions/user2"
+
+  getProducts:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successTrue"
+      quantity:
+        type: "integer"
+        default: 2
+      data:
+        type: "array"
+        items:
+          oneOf:
+            - $ref: "#/definitions/product1"
+            - $ref: "#/definitions/product2"
+  getOrders:
+    type: "object"
+    properties: 
+      success:
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgOrderFound"
+      quantity:
+        type: "integer"
+        default: 2
+      data:
+        type: "array"
+        items:
+          oneOf:
+            - $ref: "#/definitions/order1"
+            - $ref: "#/definitions/order2"
+
+  user_Found:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgUserFound"
+      quantity:
+        type: "integer"
+        default: 1
+      data:
+        type: "array"
+        items:
+          oneOf:
+            - $ref: "#/definitions/user1"
+            
+  product_Found:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgProductFound"
+      quantity:
+        type: "integer"
+        default: 1
+      data:
+        type: "array"
+        items:
+          oneOf:
+            - $ref: "#/definitions/product1"
+            
+  order_Found:
+    type: "object"
+    properties: 
+      success:
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgOrderFound"
+      quantity:
+        type: "integer"
+        default: 1
+      data:
+        type: "array"
+        items:
+          oneOf:
+            - $ref: "#/definitions/order1"
+              
+  user_NotFound:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successFalse"
+      msg:
+        $ref: "#/definitions/msgUserNotFound"
+  product_NotFound:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successFalse"
+      msg:
+        $ref: "#/definitions/msgProductNotFound"
+  order_NotFound:
+    type: "object"
+    properties:
+      success:
+          $ref: "#/definitions/successFalse"
+      msg:
+        $ref: "#/definitions/msgOrderNotFound"
+
+  postUserSuccess:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgProductCreated"
+  postProductSuccess:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgUserCreated"
+  postOrderSuccess:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgOrderCreated"
+
+  userUnsuccess_FormatError:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successFalse"
+      msg: 
+        type: "string" 
+        default: "INCORRECT_FORMAT"
+      nombreUsuario: 
+        type: "string"
+        default: "INCORRECT_FORMAT"
+
+  productUnsuccess_FormatError:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successFalse"
+      msg: 
+        type: "string" 
+        default: "INCORRECT_FORMAT"
+      nombre: 
+        type: "string"
+        default: "INCORRECT_FORMAT"
+        
+  orderUnsuccess_FormatError:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successFalse"
+      msg: 
+        type: "string" 
+        default: "INCORRECT_FORMAT"
+      nombre: 
+        type: "string"
+        default: "INCORRECT_FORMAT"
+      total:
+        type: "string"
+        default: "INCORRECT_FORMAT"
+
+  userUnsuccess_UserExist:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successFalse"
+      msg: 
+        type: "string" 
+        default: "DATA_IN_USE"
+      nombreUsuario: 
+        type: "string"
+        default: "NOT_AVAILABLE"
+      email:
+        type: "string"
+        default: "NOT_AVAILABLE"
+        
+  productUnsuccess_ProductExist:
+    type: "object"
+    properties:
+      success:
+        $ref: "#/definitions/successFalse"
+      msg: 
+        type: "string" 
+        default: "PRODUCT_ALREADY_EXIST"
+      nombre: 
+        type: "string"
+        default: "NOT_AVAILABLE"
+  
+  putUserById:
+    type: "object"
+    properties:
+      success: 
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgUserUpdated"
+        
+  putProductById:
+    type: "object"
+    properties:
+      success: 
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgProductUpdated"
+  putOrderById:
+    type: "object"
+    properties:
+      success: 
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgOrderUpdated"
+        
+  deleteUserById:
+    type: "object"
+    properties:
+      success: 
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgUserDeleted"
+
+  deleteProductById:
+    type: "object"
+    properties:
+      success: 
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgProductDeleted"
+        
+  deleteOrderById:
+    type: "object"
+    properties:
+      success: 
+        $ref: "#/definitions/successTrue"
+      msg:
+        $ref: "#/definitions/msgOrderDeleted"
+
+  loginBody:
+    type: "object"
+    properties:
+      userName:
+        type: "string"
+      password: 
+        type: "string"
+  
+  loginSuccess:
+    type: "string"
+    default: "eyJhbGciOiJIUzI1NiIsInR5cAI6IkpXVCJ9.eyJ1c2VyTmFtZSI6InNhZGl0aC5udW5leizhdsImlhdCI6MTYzMTg5NjQ5NH0.LUOEJOZjv4-4ku6gXuK7MvXDhjxWYwvOA-RZ1ntumg8"
+
+  loginUnsuccess:
+    type: "object"
+    properties:
+      sucess:
+        $ref: "#/definitions/successFalse"
+      msg:
+        $ref: "#/definitions/msgUserNotFound"
+  
